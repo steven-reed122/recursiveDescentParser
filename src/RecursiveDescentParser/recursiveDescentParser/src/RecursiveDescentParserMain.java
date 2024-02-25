@@ -213,7 +213,6 @@ public class RecursiveDescentParserMain {
         }
     
         private String handleNum() {
-            int start = index;
             while (index < line.length() && Character.isDigit(line.charAt(index))) {
                 index++;
             }
@@ -226,7 +225,6 @@ public class RecursiveDescentParserMain {
         }
     
         private String handleIdent() {
-            int start = index;
             while (index < line.length() && (Character.isLetterOrDigit(line.charAt(index)))) {
                 index++;
             }
@@ -385,6 +383,7 @@ public class RecursiveDescentParserMain {
 
         public recursiveDescentParser(tokenIterator tokenIterator) {
             this.tokenIterator = tokenIterator;
+            nextToken = tokenIterator.next();
         }
 
         private void lex() {
