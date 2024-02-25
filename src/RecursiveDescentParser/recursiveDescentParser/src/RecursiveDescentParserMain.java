@@ -35,8 +35,6 @@ public class RecursiveDescentParserMain {
                 System.out.println("Parsing: " + line);
                 recursiveDescentParser parser = new recursiveDescentParser(tokenIterator);
                 while (tokenIterator.hasNext()) {
-                    String token = tokenIterator.next();
-                    System.out.println(token);
                     parser.expr();
                 }
             }
@@ -46,7 +44,7 @@ public class RecursiveDescentParserMain {
 
         
     }
-	//This function will parse text from the file and print out the tokens
+	//This function will parse text from the file and return the tokens one at a time
 	public static class tokenIterator implements Iterator<String> {
         private String line;
         private int index = 0;
@@ -64,6 +62,10 @@ public class RecursiveDescentParserMain {
             return index < line.length();
         }
     
+        // This function will return the next token in the line
+        // It returns the token and moves the index to the next character
+        // It will throw an exception if there are no more tokens to parse
+
         @Override
         public String next() {
             if (!hasNext()) {
@@ -71,7 +73,6 @@ public class RecursiveDescentParserMain {
             }
     
             char ch = line.charAt(index);
-
             switch (ch) {
                 case 'i':
                     if (checkIsIf(line, index)) {
@@ -193,7 +194,7 @@ public class RecursiveDescentParserMain {
 				case ';': index++; token = "[SEMI]"; break;
 				case '\t': break;
 
-                // Continue with other cases...
+                // Cases for numbers and identifiers
                 default:
                     if (Character.isDigit(ch)) {
                         token = handleNum();
@@ -231,6 +232,9 @@ public class RecursiveDescentParserMain {
             return "[IDENT]";
         }
 	
+
+        //The following functions will check if the next token is a keyword
+        //It returns true if the next token is the ketword and false otherwise
         private boolean checkIsEEGEOrLE(String line, int i) {
             if(line.length() > i + 1)
             {
@@ -389,7 +393,6 @@ public class RecursiveDescentParserMain {
         private void lex() {
             if (tokenIterator.hasNext()) {
                 nextToken = tokenIterator.next();
-                System.out.println(nextToken);
                 lineNum++;
             } else {
                 nextToken = null; // or handle end of tokens
@@ -403,7 +406,6 @@ public class RecursiveDescentParserMain {
     
         void expr() {
             System.out.println("Enter <expr>");
-            System.out.println(nextToken);
             term();
             while (nextToken == "[ADD_OP]" || nextToken == "[SUB_OP]"){
                 lex();
@@ -414,7 +416,6 @@ public class RecursiveDescentParserMain {
     
         private void term() {
             System.out.println("Enter <term>");
-            System.out.println(nextToken);
             factor();
             while (nextToken == "[MUL_OP]" || nextToken == "[DIV_OP]"){
             lex();
@@ -425,7 +426,6 @@ public class RecursiveDescentParserMain {
     
         private void factor() {
             System.out.println("Enter <factor>");
-            System.out.println(nextToken);  
             if (nextToken == "[IDENT]" || nextToken == "[INT_CONST]")
                 lex();
             else {
