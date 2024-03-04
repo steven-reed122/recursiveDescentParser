@@ -245,8 +245,7 @@ public class RecursiveDescentParserMain {
                 throw new IllegalArgumentException("Error: Integer literal followed by a letter at position " + index);
             }
             return "[INT_CONST]";
-        }
-    
+        } 
         private String handleIdent() {
             while (index < line.length() && (Character.isLetterOrDigit(line.charAt(index)))) {
                 index++;
@@ -473,10 +472,60 @@ public class RecursiveDescentParserMain {
                 nextToken = null; // or handle end of tokens
             }
         }
-    
+
         private void error() {
             System.err.println("Error at line "+ lineNum);
             System.exit(1);
+        }
+
+        private void program() {
+            System.out.println("Enter <program>");
+            if (nextToken == "[PROGRAM]") {
+                lex();
+
+            } 
+            else {
+                error();
+            }
+            System.out.println("Exit <program>");
+        }
+
+        private void statements() {
+            System.out.println("Enter <statements>");
+            statement();
+            while (nextToken == "[SEMI]") {
+                lex();
+                statement();
+            }
+            System.out.println("Exit <statements>");
+        }
+
+        private void statement() {
+            System.out.println("Enter <statement>");
+            if (nextToken == "[IDENT]") {
+                lex();
+                if (nextToken == "[ASSIGN]") {
+                    lex();
+                    expr();
+                } else {
+                    error();
+                }
+            } else if (nextToken == "[IF]") {
+                lex();
+                expr();
+                if (nextToken == "[THEN]") {
+                    lex();
+                    statements();
+                } else {
+                    error();
+                }
+            } else if (nextToken == "[LOOP]") {
+                lex();
+                statements();
+            } else {
+                error();
+            }
+            System.out.println("Exit <statement>");
         }
     
         void expr() {
