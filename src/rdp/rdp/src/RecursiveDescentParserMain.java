@@ -492,7 +492,7 @@ public class RecursiveDescentParserMain {
         private void term() {
             System.out.println("Enter <term>");
             factor();
-            while (nextToken == "[MUL_OP]" || nextToken == "[DIV_OP]"){
+            while (nextToken == "[MUL_OP]" || nextToken == "[DIV_OP]" || nextToken == "[MOD_OP]"){
             lex();
             factor();
             }
