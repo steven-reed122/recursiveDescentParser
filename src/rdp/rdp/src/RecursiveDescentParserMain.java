@@ -103,9 +103,9 @@ public class RecursiveDescentParserMain {
                     }
                     break;
                 case 'p':
-                    if (checkIsProcedure(line, index)) {
-                        index += 9; // Skip 'procedure'
-                        token = "[PROCEDURE]";
+                    if (checkIsProgram(line, index)) {
+                        index += 7; // Skip 'procedure'
+                        token = "[PROGRAM]";
                     } else {
                         token = handleIdent();
                     }
@@ -122,13 +122,24 @@ public class RecursiveDescentParserMain {
                     if (checkIsElse(line, index)) {
                         index += 4; // Skip 'else'
                         token = "[ELSE]";
-                    } else if (checkIsEnd(line, index)) {
-                        index += 3; // Skip 'end'
-                        token = "[END]";
-                    } else {
+                    } else if (checkIsEnd_Something(line, index)) {
+                        if (checkIsEnd_If(line, index)) {
+                            index += 6; // Skip 'end_if'
+                            token = "[END_IF]";
+                        }
+                        else if (checkIsEnd_Loop(line, index)) {
+                            index += 8; // Skip 'end_loop'
+                            token = "[END_LOOP]";
+                        } 
+                        else if (checkIsEnd_Program(line, index)) {
+                            index += 11; // Skip 'end_program'
+                            token = "[END_PROGRAM]";
+                    } 
+                    else {
                         token = handleIdent();
                     }
                     break;
+                }
                 case 'd':
                     if (checkIsDo(line, index)) {
                         index += 2; // Skip 'do'
@@ -141,6 +152,14 @@ public class RecursiveDescentParserMain {
                     if (checkIsBreak(line, index)) {
                         index += 5; // Skip 'break'
                         token = "[BREAK]";
+                    } else {
+                        token = handleIdent();
+                    }
+                    break;
+                case 'l':
+                    if (checkIsLoop(line, index)) {
+                        index += 4; // Skip 'end_loop'
+                        token = "[LOOP]";
                     } else {
                         token = handleIdent();
                     }
@@ -170,6 +189,7 @@ public class RecursiveDescentParserMain {
                         index++; // Skip '<'
                         token = "[GT]";
                     }
+                    break;
                 case '+':
                     if (checkIsInc(line, index)) {
                         index += 2; // Skip '++'
@@ -192,6 +212,7 @@ public class RecursiveDescentParserMain {
 				case '&': index++; token = "[AND]"; break;
 				case '!': index++; token = "[NEG]"; break;
 				case ',': index++; token = "[COMMA]"; break;
+                case ':': index++; token = "[COLON]"; break;
 				case ';': index++; token = "[SEMI]"; break;
 				case '\t': break;
 
@@ -290,8 +311,8 @@ public class RecursiveDescentParserMain {
             }
             return false;
         }
-        private boolean checkIsProcedure(String line, int i) {
-            if(line.length() > i + 8)
+        private boolean checkIsProgram(String line, int i) {
+            if(line.length() > i + 6)
             {
                 char ch2 = line.charAt(i+1);
                 char ch3 = line.charAt(i+2);
@@ -299,10 +320,8 @@ public class RecursiveDescentParserMain {
                 char ch5 = line.charAt(i+4);
                 char ch6 = line.charAt(i+5);
                 char ch7 = line.charAt(i+6);
-                char ch8 = line.charAt(i+7);
-                char ch9 = line.charAt(i+8);
-                if(ch2 == 'r' && ch3 == 'o' && ch4 == 'c' && ch5 == 'e'
-                        && ch6 == 'd' && ch7 == 'u' && ch8 == 'r' && ch9 =='e') {
+                if(ch2 == 'r' && ch3 == 'o' && ch4 == 'g' && ch5 == 'r'
+                        && ch6 == 'a' && ch7 == 'm') {
                     return true;
                 }
             }
@@ -368,12 +387,67 @@ public class RecursiveDescentParserMain {
             }
             return false;
         }
-        private boolean checkIsEnd(String line, int i) {
+        private boolean checkIsEnd_Something(String line, int i) {
             if(line.length() > i + 2)
             {
                 char ch2 = line.charAt(i+1);
                 char ch3 = line.charAt(i+2);
                 if(ch2 == 'n' && ch3 == 'd') {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private boolean checkIsEnd_If(String line, int i) {
+            if(line.length() > i + 5)
+            {
+                char ch4 = line.charAt(i+3);
+                char ch5 = line.charAt(i+4);
+                char ch6 = line.charAt(i+5);
+                if(ch4 == '_' && ch5 == 'i' && ch6 == 'f') {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private boolean checkIsEnd_Loop(String line, int i) {
+            if(line.length() > i + 7)
+            {
+                char ch4 = line.charAt(i+3);
+                char ch5 = line.charAt(i+4);
+                char ch6 = line.charAt(i+5);
+                char ch7 = line.charAt(i+6);
+                char ch8 = line.charAt(i+7);
+                if(ch4 == '_' && ch5 == 'l' && ch6 == 'o' && ch7 == 'o' && ch8 == 'p') {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private boolean checkIsLoop(String line, int i) {
+            if(line.length() > i + 3)
+            {
+                char ch2 = line.charAt(i+1);
+                char ch3 = line.charAt(i+2);
+                char ch4 = line.charAt(i+3);
+                if(ch2 == 'o' && ch3 == 'o' && ch4 == 'p') {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private boolean checkIsEnd_Program(String line, int i) {
+            if(line.length() > i + 7)
+            {
+                char ch4 = line.charAt(i+3);
+                char ch5 = line.charAt(i+4);
+                char ch6 = line.charAt(i+5);
+                char ch7 = line.charAt(i+6);
+                char ch8 = line.charAt(i+7);
+                char ch9 = line.charAt(i+8);
+                char ch10 = line.charAt(i+9);
+                char ch11 = line.charAt(i+10);
+                if(ch4 == '_' && ch5 == 'p' && ch6 == 'r' && ch7 == 'o' && ch8 == 'g' && ch9 == 'r' && ch10 == 'a' && ch11 == 'm') {
                     return true;
                 }
             }
