@@ -12,454 +12,36 @@ public class RecursiveDescentParserMain {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         //System.out.println("Enter name of file to be parsed"); // Corrected line
-        String fileName = "testfile.txt";
+        String fileName = "newtestfile.txt";
         fileReader(fileName);
         scanner.close();
     }
 
     public static void fileReader(String fileName) {
         File file = new File(fileName);
+        String text = "";
         try (Scanner fileScanner = new Scanner(file)) {
             while (fileScanner.hasNextLine()) {
                 String line = fileScanner.nextLine();
-                tokenIterator tokenIterator = new tokenIterator(line);
-                while (tokenIterator.hasNext()) {
-                    String token = tokenIterator.next();
-                    System.out.println(token); // Assuming you want to print the tokens
-                }
+                text += line + "\n";
             }
+            tokenIterator tokenIterator = new tokenIterator(text);
+            Queue<String> tokens = tokenIterator.getTokens();
+            Queue<String> tokensCopy = new LinkedList<>(tokens);
+            while (tokens.size() > 0) {
+                System.out.println(tokens.poll());
+            }
+            recursiveDescentParser parser = new recursiveDescentParser(tokensCopy);
+            parser.program();
         } catch (FileNotFoundException e) {
             System.err.println("File not found: " + e.getMessage());
-        }
-        try (Scanner fileScanner = new Scanner(file)) {
-            while (fileScanner.hasNextLine()) {
-                String line = fileScanner.nextLine();
-                tokenIterator tokenIterator = new tokenIterator(line);
-                recursiveDescentParser parser = new recursiveDescentParser(tokenIterator);
-                System.out.println("Parsing: " + line);
-                while (tokenIterator.hasNext()) {
-                    parser.expr();
-                }
-            }
-        } catch (FileNotFoundException e) {
-            System.err.println("File not found: " + e.getMessage());
-        }
-
-        
-    }
-	//This function will parse text from the file and return the tokens one at a time
-	public static class tokenIterator implements Iterator<String> {
-        private String line;
-        private int index = 0;
-        private String token = null;
-    
-        public tokenIterator(String line) {
-            this.line = line;
-        }
-    
-        @Override
-        public boolean hasNext() {
-            while (index < line.length() && Character.isWhitespace(line.charAt(index))) {
-                index++;
-            }
-            return index < line.length();
-        }
-    
-        // This function will return the next token in the line
-        // It returns the token and moves the index to the next character
-        // It will throw an exception if there are no more tokens to parse
-
-        @Override
-        public String next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException("No more tokens to parse.");
-            }
-    
-            char ch = line.charAt(index);
-            switch (ch) {
-                case 'i':
-                    if (checkIsIf(line, index)) {
-                        index += 2; // Skip 'if'
-                        token = "[IF]";
-                    } else if (checkIsInt(line, index)) {
-                        index += 3; // Skip 'int'
-                        token = "[INT]";
-                    } else {
-                        token = handleIdent();
-                    }
-                    break;
-                case 'w':
-                    if (checkIsWhile(line, index)) {
-                        index += 5; // Skip 'while'
-                        token = "[WHILE]";
-                    } else {
-                        token = handleIdent();
-                    }
-                    break;
-                case 'f':
-                    if (checkIsFor(line, index)) {
-                        index += 3; // Skip 'for'
-                        token = "[FOR]";
-                    } else {
-                        token = handleNum();
-                    }
-                    break;
-                case 'p':
-                    if (checkIsProgram(line, index)) {
-                        index += 7; // Skip 'procedure'
-                        token = "[PROGRAM]";
-                    } else {
-                        token = handleIdent();
-                    }
-                    break;
-                case 'r':
-                    if (checkIsReturn(line, index)) {
-                        index += 6; // Skip 'return'
-                        token = "[RETURN]";
-                    } else {
-                        token = handleIdent();
-                    }
-                    break;
-                case 'e':
-                    if (checkIsElse(line, index)) {
-                        index += 4; // Skip 'else'
-                        token = "[ELSE]";
-                    } else if (checkIsEnd_Something(line, index)) {
-                        if (checkIsEnd_If(line, index)) {
-                            index += 6; // Skip 'end_if'
-                            token = "[END_IF]";
-                        }
-                        else if (checkIsEnd_Loop(line, index)) {
-                            index += 8; // Skip 'end_loop'
-                            token = "[END_LOOP]";
-                        } 
-                        else if (checkIsEnd_Program(line, index)) {
-                            index += 11; // Skip 'end_program'
-                            token = "[END_PROGRAM]";
-                    } 
-                    else {
-                        token = handleIdent();
-                    }
-                    break;
-                }
-                case 'd':
-                    if (checkIsDo(line, index)) {
-                        index += 2; // Skip 'do'
-                        token = "[DO]";
-                    } else {
-                        token = handleIdent();
-                    }
-                    break;
-                case 'b':
-                    if (checkIsBreak(line, index)) {
-                        index += 5; // Skip 'break'
-                        token = "[BREAK]";
-                    } else {
-                        token = handleIdent();
-                    }
-                    break;
-                case 'l':
-                    if (checkIsLoop(line, index)) {
-                        index += 4; // Skip 'end_loop'
-                        token = "[LOOP]";
-                    } else {
-                        token = handleIdent();
-                    }
-                    break;
-                case '=':
-                    if (checkIsEEGEOrLE(line, index)) {
-                        index += 2; // Skip '=='
-                        token = "[EE]";
-                    } else {
-                        index++; // Skip '='
-                        token = "[ASSIGN]";
-                    }
-                    break;
-                case '<':
-                    if (checkIsEEGEOrLE(line, index)) {
-                        index += 2; // Skip '<='
-                        token = "[LE]";
-                    } else {
-                        index++; // Skip '<'
-                        token = "[LT]";
-                    }
-                    break;
-                case '>':
-                    if (checkIsEEGEOrLE(line, index)) {
-                        index += 2; // Skip '<='
-                        token = "[GE]";
-                    } else {
-                        index++; // Skip '<'
-                        token = "[GT]";
-                    }
-                    break;
-                case '+':
-                    if (checkIsInc(line, index)) {
-                        index += 2; // Skip '++'
-                        token = "[INC]";
-                    } else {
-                        index++; // Skip '+'
-                        token = "[ADD_OP]";
-                    }
-                    break;
-                // Add cases for other characters following the same pattern
-                case '-': index++; token = "[SUB_OP]"; break;
-                case '*': index++; token = "[MUL_OP]"; break;
-                case '/': index++; token = "[DIV_OP]"; break;
-				case '%': index++; token = "[MOD_OP]"; break;
-				case '(': index++; token = "[LP]"; break;
-				case ')': index++; token = "[RP]"; break;
-				case '{': index++; token = "[LB]"; break;
-				case '}': index++; token = "[RB]"; break;
-				case '|': index++; token = "[OR]"; break;
-				case '&': index++; token = "[AND]"; break;
-				case '!': index++; token = "[NEG]"; break;
-				case ',': index++; token = "[COMMA]"; break;
-                case ':': index++; token = "[COLON]"; break;
-				case ';': index++; token = "[SEMI]"; break;
-				case '\t': break;
-
-                // Cases for numbers and identifiers
-                default:
-                    if (Character.isDigit(ch)) {
-                        token = handleNum();
-                    } else if (Character.isLetter(ch)) {
-                        token = handleIdent();
-                    } else {
-                        index++; // Skip unknown character
-                        token = "[UNKNOWN]";
-                    }
-                    break;
-            }
-            if (token == null) {
-                throw new IllegalStateException("Token parsing failed.");
-            }
-        
-            return token;
-        }
-    
-        private String handleNum() {
-            while (index < line.length() && Character.isDigit(line.charAt(index))) {
-                index++;
-            }
-            if (index < line.length() && Character.isLetter(line.charAt(index))) {
-                // You can choose to throw an exception or return an error token
-                // Throwing an exception will halt the parsing with an error
-                throw new IllegalArgumentException("Error: Integer literal followed by a letter at position " + index);
-            }
-            return "[INT_CONST]";
-        } 
-        private String handleIdent() {
-            while (index < line.length() && (Character.isLetterOrDigit(line.charAt(index)))) {
-                index++;
-            }
-            return "[IDENT]";
-        }
-	
-
-        //The following functions will check if the next token is a keyword
-        //It returns true if the next token is the ketword and false otherwise
-        private boolean checkIsEEGEOrLE(String line, int i) {
-            if(line.length() > i + 1)
-            {
-                char chNext = line.charAt(i+1);
-                if(chNext == '=') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsInc(String line, int i) {
-            if(line.length() > i + 1)
-            {
-                char chNext = line.charAt(i+1);
-                if(chNext == '+') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsIf(String line, int i) {
-            if(line.length() > i + 1)
-            {
-                char chNext = line.charAt(i+1);
-                if(chNext == 'f') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsFor(String line, int i) {
-            if(line.length() > i + 2)
-            {
-                char chNext = line.charAt(i+1);
-                char chNextNext = line.charAt(i+2);
-                if(chNext == 'o' && chNextNext == 'r') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsWhile(String line, int i) {
-            if(line.length() > i + 4)
-            {
-                char ch2 = line.charAt(i+1);
-                char ch3 = line.charAt(i+2);
-                char ch4 = line.charAt(i+3);
-                char ch5 = line.charAt(i+4);
-                if(ch2 == 'h' && ch3 == 'i' && ch4 == 'l' && ch5 == 'e') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsProgram(String line, int i) {
-            if(line.length() > i + 6)
-            {
-                char ch2 = line.charAt(i+1);
-                char ch3 = line.charAt(i+2);
-                char ch4 = line.charAt(i+3);
-                char ch5 = line.charAt(i+4);
-                char ch6 = line.charAt(i+5);
-                char ch7 = line.charAt(i+6);
-                if(ch2 == 'r' && ch3 == 'o' && ch4 == 'g' && ch5 == 'r'
-                        && ch6 == 'a' && ch7 == 'm') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsReturn(String line, int i) {
-            if(line.length() > i + 5)
-            {
-                char ch2 = line.charAt(i+1);
-                char ch3 = line.charAt(i+2);
-                char ch4 = line.charAt(i+3);
-                char ch5 = line.charAt(i+4);
-                char ch6 = line.charAt(i+5);
-                if(ch2 == 'e' && ch3 == 't' && ch4 == 'u' && ch5 == 'r' && ch6 == 'n') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsInt(String line, int i) {
-            if(line.length() > i + 2)
-            {
-                char chNext = line.charAt(i+1);
-                char chNextNext = line.charAt(i+2);
-                if(chNext == 'n' && chNextNext == 't') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsElse(String line, int i) {
-            if(line.length() > i + 3)
-            {
-                char ch2 = line.charAt(i+1);
-                char ch3 = line.charAt(i+2);
-                char ch4 = line.charAt(i+3);
-                if(ch2 == 'l' && ch3 == 's' && ch4 == 'e') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsDo(String line, int i) {
-            if(line.length() > i + 1)
-            {
-                char ch2 = line.charAt(i+1);
-                if(ch2 == 'o') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsBreak(String line, int i) {
-            if(line.length() > i + 4)
-            {
-                char ch2 = line.charAt(i+1);
-                char ch3 = line.charAt(i+2);
-                char ch4 = line.charAt(i+3);
-                char ch5 = line.charAt(i+4);
-                if(ch2 == 'r' && ch3 == 'e' && ch4 == 'a' && ch5 == 'k') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsEnd_Something(String line, int i) {
-            if(line.length() > i + 2)
-            {
-                char ch2 = line.charAt(i+1);
-                char ch3 = line.charAt(i+2);
-                if(ch2 == 'n' && ch3 == 'd') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsEnd_If(String line, int i) {
-            if(line.length() > i + 5)
-            {
-                char ch4 = line.charAt(i+3);
-                char ch5 = line.charAt(i+4);
-                char ch6 = line.charAt(i+5);
-                if(ch4 == '_' && ch5 == 'i' && ch6 == 'f') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsEnd_Loop(String line, int i) {
-            if(line.length() > i + 7)
-            {
-                char ch4 = line.charAt(i+3);
-                char ch5 = line.charAt(i+4);
-                char ch6 = line.charAt(i+5);
-                char ch7 = line.charAt(i+6);
-                char ch8 = line.charAt(i+7);
-                if(ch4 == '_' && ch5 == 'l' && ch6 == 'o' && ch7 == 'o' && ch8 == 'p') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsLoop(String line, int i) {
-            if(line.length() > i + 3)
-            {
-                char ch2 = line.charAt(i+1);
-                char ch3 = line.charAt(i+2);
-                char ch4 = line.charAt(i+3);
-                if(ch2 == 'o' && ch3 == 'o' && ch4 == 'p') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private boolean checkIsEnd_Program(String line, int i) {
-            if(line.length() > i + 7)
-            {
-                char ch4 = line.charAt(i+3);
-                char ch5 = line.charAt(i+4);
-                char ch6 = line.charAt(i+5);
-                char ch7 = line.charAt(i+6);
-                char ch8 = line.charAt(i+7);
-                char ch9 = line.charAt(i+8);
-                char ch10 = line.charAt(i+9);
-                char ch11 = line.charAt(i+10);
-                if(ch4 == '_' && ch5 == 'p' && ch6 == 'r' && ch7 == 'o' && ch8 == 'g' && ch9 == 'r' && ch10 == 'a' && ch11 == 'm') {
-                    return true;
-                }
-            }
-            return false;
-        }
+        }   
     }
 
     public static class tokenIterator implements Iterator<String> {
     private String line;
     private Queue<String> tokens;
+    int index = 0;
     
     public tokenIterator(String line) {
         this.line = line;
@@ -468,7 +50,6 @@ public class RecursiveDescentParserMain {
     }
     
     private void parseTokens() {
-        int index = 0;
         while (index < line.length()) {
             while (index < line.length() && Character.isWhitespace(line.charAt(index))) {
                 index++;
@@ -491,7 +72,7 @@ public class RecursiveDescentParserMain {
                         break;
                     case 'p':
                         if (checkIsProgram(line, index)) {
-                            tokenbuilder.append("[PROGRAM]");
+                            tokenBuilder.append("[PROGRAM]");
                             index += 7; // Skip 'program'
                         } else {
                             tokenBuilder.append(handleIdent());
@@ -552,22 +133,22 @@ public class RecursiveDescentParserMain {
                         }
                         break;
                     case '+': index++; tokenBuilder.append("[ADD_OP]"); break;
-
-                    case '-': index++; tokenBuilder.append("SUB_OP"); break;
-                    case '*': index++; tokenBuilder.append("MUL_OP"); break;
-                    case '/': index++; tokenBuilder.append("DIV_OP"); break;
-                    case '%': index++; tokenBuilder.append("MOD_OP"); break;
-                    case '(': index++; tokenBuilder.append("LP"); break;
-                    case ')': index++; tokenBuilder.append("RP"); break;
-                    case '{': index++; tokenBuilder.append("LB"); break;
-                    case '}': index++; tokenBuilder.append("RB"); break;
-                    case '|': index++; tokenBuilder.append("OR"); break;
-                    case '&': index++; tokenBuilder.append("AND"); break;
-                    case '!': index++; tokenBuilder.append("NEG"); break;
-                    case ',': index++; tokenBuilder.append("COMMA"); break;
-                    case ':': index++; tokenBuilder.append("COLON"); break;
-                    case ';': index++; tokenBuilder.append("SEMI"); break;
+                    case '-': index++; tokenBuilder.append("[SUB_OP]"); break;
+                    case '*': index++; tokenBuilder.append("[MUL_OP]"); break;
+                    case '/': index++; tokenBuilder.append("[DIV_OP]"); break;
+                    case '%': index++; tokenBuilder.append("[MOD_OP]"); break;
+                    case '(': index++; tokenBuilder.append("[LP]"); break;
+                    case ')': index++; tokenBuilder.append("[RP]"); break;
+                    case '{': index++; tokenBuilder.append("[LB]"); break;
+                    case '}': index++; tokenBuilder.append("[RB]"); break;
+                    case '|': index++; tokenBuilder.append("[OR]"); break;
+                    case '&': index++; tokenBuilder.append("[AND]"); break;
+                    case '!': index++; tokenBuilder.append("[NEG]"); break;
+                    case ',': index++; tokenBuilder.append("[COMMA]"); break;
+                    case ':': index++; tokenBuilder.append("[COLON]"); break;
+                    case ';': index++; tokenBuilder.append("[SEMI]"); break;
                     case '\t': break;
+                    case '\n': break;
                     default:
                         if (Character.isDigit(ch)) {
                             tokenBuilder.append(handleNum());
@@ -582,112 +163,6 @@ public class RecursiveDescentParserMain {
                 tokens.offer(tokenBuilder.toString());
             }
         }
-    }
-    
-    private void swithCase(Stirng line, int index, StringBuilder tokenBuilder) {
-        char ch = line.charAt(index);
-        switch (ch) {
-            case 'i':
-                if (checkIsIf(line, index)) {
-                    tokenBuilder.append("[IF]");
-                    index += 2; // Skip 'if'
-                } else if (checkIsInt(line, index)) {
-                    tokenBuilder.append("[INT]");
-                    index += 3; // Skip 'int'
-                } else {
-                    tokenBuilder.append(handleIdent());
-                }
-                break;
-            case 'p':
-                if (checkIsProgram(line, index)) {
-                    tokenbuilder.append("[PROGRAM]");
-                    index += 7; // Skip 'program'
-                } else {
-                    tokenBuilder.append(handleIdent());
-                }
-                break;
-            case 'e':
-                if (checkIsEnd_Something(line, index)) {
-                    if (checkIsEnd_If(line, index)) {
-                        tokenBuilder.append("[END_IF]");
-                        index += 6; // Skip 'end_if'
-                    }
-                    else if (checkIsEnd_Loop(line, index)) {
-                        tokenBuilder.append("[END_LOOP]");
-                        index += 8; // Skip 'end_loop'
-                    } 
-                    else if (checkIsEnd_Program(line, index)) {
-                        tokenBuilder.append("[END_PROGRAM]");
-                        index += 11; // Skip 'end_program'
-                } 
-                else {
-                    tokenBuilder.append(handleIdent());
-                }
-                break;
-            }
-            case 'l':
-                if (checkIsLoop(line, index)) {
-                    tokenBuilder.append("[LOOP]");
-                    index += 4; // Skip 'end_loop'
-                } else {
-                    tokenBuilder.append(handleIdent());
-                }
-                break;
-            case '=':
-                if (checkIsEEGEOrLE(line, index)) {
-                    tokenBuilder.append("[EE]");
-                    index += 2; // Skip '=='
-                } else {
-                    tokenBuilder.append("[ASSIGN]");
-                    index++; // Skip '='
-                }
-                break;
-            case '<':
-                if (checkIsEEGEOrLE(line, index)) {
-                    tokenBuilder.append("[LE]");
-                    index += 2; // Skip '<='
-                } else {
-                    tokenBuilder.append("[LT]");
-                    index++; // Skip '<'
-                }
-                break;
-            case '>':
-                if (checkIsEEGEOrLE(line, index)) {
-                    tokenBuilder.append("[GE]");
-                    index += 2; // Skip '<=' 
-                } else {
-                    tokenBuilder.append("[GT]");
-                    index++; // Skip '<'
-                }
-                break;
-            case '+': index++; tokenBuilder.append("[ADD_OP]"); break;
-            case '-': index++; tokenBuilder.append("SUB_OP"); break;
-            case '*': index++; tokenBuilder.append("MUL_OP"); break;
-            case '/': index++; tokenBuilder.append("DIV_OP"); break;
-            case '%': index++; tokenBuilder.append("MOD_OP"); break;
-            case '(': index++; tokenBuilder.append("LP"); break;
-            case ')': index++; tokenBuilder.append("RP"); break;
-            case '{': index++; tokenBuilder.append("LB"); break;
-            case '}': index++; tokenBuilder.append("RB"); break;
-            case '|': index++; tokenBuilder.append("OR"); break;
-            case '&': index++; tokenBuilder.append("AND"); break;
-            case '!': index++; tokenBuilder.append("NEG"); break;
-            case ',': index++; tokenBuilder.append("COMMA"); break;
-            case ':': index++; tokenBuilder.append("COLON"); break;
-            case ';': index++; tokenBuilder.append("SEMI"); break;
-            case '\t': break;
-            default:
-                if (Character.isDigit(ch)) {
-                    tokenBuilder.append(handleNum());
-                } else if (Character.isLetter(ch)) {
-                    tokenBuilder.append(handleIdent());
-                } else {
-                    index++; // Skip unknown character
-                    tokenBuilder.append("[UNKNOWN]");
-                }
-                break;
-        }
-
     }
 
     @Override
@@ -733,45 +208,11 @@ public class RecursiveDescentParserMain {
             }
             return false;
         }
-    private boolean checkIsInc(String line, int i) {
-            if(line.length() > i + 1)
-            {
-                char chNext = line.charAt(i+1);
-                if(chNext == '+') {
-                    return true;
-                }
-            }
-            return false;
-        }
     private boolean checkIsIf(String line, int i) {
             if(line.length() > i + 1)
             {
                 char chNext = line.charAt(i+1);
                 if(chNext == 'f') {
-                    return true;
-                }
-            }
-            return false;
-        }
-    private boolean checkIsFor(String line, int i) {
-            if(line.length() > i + 2)
-            {
-                char chNext = line.charAt(i+1);
-                char chNextNext = line.charAt(i+2);
-                if(chNext == 'o' && chNextNext == 'r') {
-                    return true;
-                }
-            }
-            return false;
-        }
-    private boolean checkIsWhile(String line, int i) {
-            if(line.length() > i + 4)
-            {
-                char ch2 = line.charAt(i+1);
-                char ch3 = line.charAt(i+2);
-                char ch4 = line.charAt(i+3);
-                char ch5 = line.charAt(i+4);
-                if(ch2 == 'h' && ch3 == 'i' && ch4 == 'l' && ch5 == 'e') {
                     return true;
                 }
             }
@@ -793,61 +234,12 @@ public class RecursiveDescentParserMain {
             }
             return false;
         }
-    private boolean checkIsReturn(String line, int i) {
-            if(line.length() > i + 5)
-            {
-                char ch2 = line.charAt(i+1);
-                char ch3 = line.charAt(i+2);
-                char ch4 = line.charAt(i+3);
-                char ch5 = line.charAt(i+4);
-                char ch6 = line.charAt(i+5);
-                if(ch2 == 'e' && ch3 == 't' && ch4 == 'u' && ch5 == 'r' && ch6 == 'n') {
-                    return true;
-                }
-            }
-            return false;
-        }
     private boolean checkIsInt(String line, int i) {
             if(line.length() > i + 2)
             {
                 char chNext = line.charAt(i+1);
                 char chNextNext = line.charAt(i+2);
                 if(chNext == 'n' && chNextNext == 't') {
-                    return true;
-                }
-            }
-            return false;
-        }
-    private boolean checkIsElse(String line, int i) {
-            if(line.length() > i + 3)
-            {
-                char ch2 = line.charAt(i+1);
-                char ch3 = line.charAt(i+2);
-                char ch4 = line.charAt(i+3);
-                if(ch2 == 'l' && ch3 == 's' && ch4 == 'e') {
-                    return true;
-                }
-            }
-            return false;
-        }
-    private boolean checkIsDo(String line, int i) {
-            if(line.length() > i + 1)
-            {
-                char ch2 = line.charAt(i+1);
-                if(ch2 == 'o') {
-                    return true;
-                }
-            }
-            return false;
-        }
-    private boolean checkIsBreak(String line, int i) {
-            if(line.length() > i + 4)
-            {
-                char ch2 = line.charAt(i+1);
-                char ch3 = line.charAt(i+2);
-                char ch4 = line.charAt(i+3);
-                char ch5 = line.charAt(i+4);
-                if(ch2 == 'r' && ch3 == 'e' && ch4 == 'a' && ch5 == 'k') {
                     return true;
                 }
             }
@@ -927,18 +319,18 @@ public class RecursiveDescentParserMain {
     
     
     public static class recursiveDescentParser {
-        private tokenIterator tokenIterator;
+        private Queue<String> tokens;
         private String nextToken;
         private int lineNum = 0;
 
-        public recursiveDescentParser(tokenIterator tokenIterator) {
-            this.tokenIterator = tokenIterator;
-            nextToken = tokenIterator.next();
+        public recursiveDescentParser(Queue<String> tokens) {
+            this.tokens = tokens;
+            nextToken = tokens.poll();
         }
 
         private void lex() {
-            if (tokenIterator.hasNext()) {
-                nextToken = tokenIterator.next();
+            if (tokens.size() > 0) {
+                nextToken = tokens.poll();
             } else {
                 nextToken = null; // or handle end of tokens
             }
@@ -951,15 +343,7 @@ public class RecursiveDescentParserMain {
 
         private void program() {
             System.out.println("Enter <program>");
-            System.out.println("Next token: " + nextToken);
-            lex();
-            System.out.println("Next token: " + nextToken);
-            lex();
-            System.out.println("Next token: " + nextToken);
-            lex();
-            System.out.println("Next token: " + nextToken);
             if (nextToken.equals("[PROGRAM]")) {
-                lex(); // Move to the next token
                 statements();
                 if (nextToken.equals("[END_PROGRAM]")) {
                     lex(); // Move to the next token
@@ -975,7 +359,7 @@ public class RecursiveDescentParserMain {
 
         private void statements() {
             System.out.println("Enter <statements>");
-            while (nextToken != "[END_PROGRAM]") {
+            while (!nextToken.equals("[END_PROGRAM]")) {
                 lex();
                 statement();
             }
@@ -984,24 +368,34 @@ public class RecursiveDescentParserMain {
 
         private void statement() {
             System.out.println("Enter <statement>");
-            if (nextToken == "[IDENT]") {
+            if (nextToken.equals("[IDENT]")) {
                 lex();
-                if (nextToken == "[ASSIGN]") {
-                    lex();
-                    expr();
-                } else {
-                    error();
-                }
-            } else if (nextToken == "[IF]") {
+                assignment();
+            } else if (nextToken.equals("[IF]")) {
                 lex();
                 conditional();
-            } else if (nextToken == "[LOOP]") {
+            } else if (nextToken.equals("[LOOP]")) {
                 lex();
-                statements();
+                loop();
             } else {
                 error();
             }
             System.out.println("Exit <statement>");
+        }
+
+        private void assignment() {
+            System.out.println("Enter <assignment>");
+            if (nextToken.equals("[ASSIGN]")) {
+                lex();
+                expr();
+                if(!nextToken.equals("[SEMI]")) {
+                    error();
+                }
+            }
+            else {
+                error();
+            }
+            System.out.println("Exit <assignment>");
         }
 
         private void conditional() {
@@ -1009,7 +403,7 @@ public class RecursiveDescentParserMain {
             lex();
             logicalExpression();
             statements();
-            if (nextToken == "[END_IF]") {
+            if (nextToken.equals("[END_IF]")) {
                 statements();
             }
         }
@@ -1017,18 +411,71 @@ public class RecursiveDescentParserMain {
         private void logicalExpression() {
             System.out.println("Enter <logicalExpression>");
             expr();
-            if (nextToken == "[LT]" || nextToken == "[GT]" || nextToken == "[LE]" || nextToken == "[GE]" || nextToken == "[EE]") {
+            if (nextToken.equals("[LT]") || nextToken.equals("[GT]") || nextToken.equals("[LE]") || 
+                    nextToken.equals("[GE]") || nextToken.equals("[EE]")) {
                 lex();
                 expr();
             }
             System.out.println("Exit <logicalExpression>");
         }
+
+        private void loop() {
+            System.out.println("Enter <loop>");
+            System.out.println("nextToken: " + nextToken);
+            if (nextToken.equals("[LP]")) {
+                lex();
+                loop_assignment();
+                System.out.println("nextToken: " + nextToken);
+                if (nextToken.equals("[COLON]")) {
+                    lex();
+                    System.out.println("nextToken: " + nextToken);
+                }
+                else {
+                    error();
+                }
+            }
+            else {
+                error();
+            }
+            if (nextToken.equals("[IDENT]")) {
+                lex();
+                System.out.println("nextToken: " + nextToken);
+                statements();
+            }
+            else {
+                error();
+            }
+            if (nextToken.equals("[END_LOOP]")) {
+                lex();
+            }
+            else {
+                error();
+            }
+            System.out.println("Exit <loop>");
+        }
+
+        private void loop_assignment() {
+            System.out.println("Enter <loop_assignment>");
+            if (nextToken.equals("[IDENT]")) {
+                lex();
+                if (nextToken.equals("[ASSIGN]")) {
+                    lex();
+                    expr();
+                }
+                else {
+                    error();
+                }
+            }
+            else {
+                error();
+            }
+            System.out.println("Exit <loop_assignment>");
+        }
     
         void expr() {
             System.out.println("Enter <expr>");
-            System.out.println("Next token: " + nextToken);
             term();
-            while (nextToken == "[ADD_OP]" || nextToken == "[SUB_OP]"){
+            while (nextToken.equals("[ADD_OP]") || nextToken.equals("[SUB_OP]")){
                 lex();
                 term();
             }
@@ -1038,7 +485,8 @@ public class RecursiveDescentParserMain {
         private void term() {
             System.out.println("Enter <term>");
             factor();
-            while (nextToken == "[MUL_OP]" || nextToken == "[DIV_OP]" || nextToken == "[MOD_OP]"){
+            while (nextToken.equals("[MUL_OP]") || nextToken.equals("[DIV_OP]") 
+                    || nextToken.equals("[MOD_OP]")) {
             lex();
             factor();
             }
@@ -1047,13 +495,13 @@ public class RecursiveDescentParserMain {
     
         private void factor() {
             System.out.println("Enter <factor>");
-            if (nextToken == "[IDENT]" || nextToken == "[INT_CONST]")
+            if (nextToken.equals("[IDENT]") || nextToken.equals("[INT_CONST]"))
                 lex();
             else {
-                if (nextToken == "[LP]") {
+                if (nextToken.equals("[LP]")) {
                     lex();
                     expr();
-                    if (nextToken == "[RP]")
+                    if (nextToken.equals("[RP]"))
                         lex();
                     else
                         error();
