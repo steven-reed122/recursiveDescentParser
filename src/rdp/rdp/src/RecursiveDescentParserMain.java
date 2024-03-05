@@ -421,44 +421,17 @@ public class RecursiveDescentParserMain {
 
         private void loop() {
             System.out.println("Enter <loop>");
-            System.out.println("nextToken: " + nextToken);
-            if (nextToken.equals("[LP]")) {
-                lex();
-                loop_assignment();
-                System.out.println("nextToken: " + nextToken);
-                if (nextToken.equals("[COLON]")) {
-                    lex();
-                    System.out.println("nextToken: " + nextToken);
-                }
-                else {
-                    error();
-                }
-            }
-            else {
-                error();
-            }
-            if (nextToken.equals("[IDENT]")) {
-                lex();
-                System.out.println("nextToken: " + nextToken);
-                statements();
-            }
-            else {
-                error();
-            }
-            if (nextToken.equals("[END_LOOP]")) {
-                lex();
-            }
-            else {
-                error();
-            }
+            lex();
+            loop_condition();
             System.out.println("Exit <loop>");
         }
 
-        private void loop_assignment() {
-            System.out.println("Enter <loop_assignment>");
+        private void loop_condition() {
+            System.out.println("Enter <loop_condition>");
             if (nextToken.equals("[IDENT]")) {
                 lex();
-                if (nextToken.equals("[ASSIGN]")) {
+                loop_assignment();
+                if (nextToken.equals("[COLON]")) {
                     lex();
                     expr();
                 }
@@ -469,10 +442,32 @@ public class RecursiveDescentParserMain {
             else {
                 error();
             }
+            System.out.println("Exit <loop_condition>");
+        }
+
+        private void loop_assignment() {
+            System.out.println("Enter <loop_assignment>");
+            System.out.println(nextToken);
+            if (nextToken.equals("[ASSIGN]")) {
+                lex();
+                expr();
+            }
+            else {
+                    error();
+                }
             System.out.println("Exit <loop_assignment>");
         }
+
+        private void loop_statements() {
+            System.out.println("Enter <loop_statements>");
+            while (!nextToken.equals("[END_LOOP]")) {
+                lex();
+                statement();
+            }
+            System.out.println("Exit <loop_statements>");
+        }
     
-        void expr() {
+        private void expr() {
             System.out.println("Enter <expr>");
             term();
             while (nextToken.equals("[ADD_OP]") || nextToken.equals("[SUB_OP]")){
