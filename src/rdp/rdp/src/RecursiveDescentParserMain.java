@@ -493,7 +493,7 @@ public class RecursiveDescentParserMain {
         private void statements() {
             System.out.println("Enter <statements>");
             statement();
-            while (nextToken == "[SEMI]") {
+            while (nextToken != "[END_PROGRAM]") {
                 lex();
                 statement();
             }
@@ -512,13 +512,7 @@ public class RecursiveDescentParserMain {
                 }
             } else if (nextToken == "[IF]") {
                 lex();
-                expr();
-                if (nextToken == "[THEN]") {
-                    lex();
-                    statements();
-                } else {
-                    error();
-                }
+                conditional();
             } else if (nextToken == "[LOOP]") {
                 lex();
                 statements();
@@ -526,6 +520,26 @@ public class RecursiveDescentParserMain {
                 error();
             }
             System.out.println("Exit <statement>");
+        }
+
+        private void conditional() {
+            System.out.println("Enter <conditional>");
+            lex();
+            logicalExpression();
+            statements();
+            if (nextToken == "[END_IF]") {
+                statements();
+            }
+        }
+
+        private void logicalExpression() {
+            System.out.println("Enter <logicalExpression>");
+            expr();
+            if (nextToken == "[LT]" || nextToken == "[GT]" || nextToken == "[LE]" || nextToken == "[GE]" || nextToken == "[EE]") {
+                lex();
+                expr();
+            }
+            System.out.println("Exit <logicalExpression>");
         }
     
         void expr() {
