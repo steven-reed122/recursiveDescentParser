@@ -344,6 +344,7 @@ public class RecursiveDescentParserMain {
         private void program() {
             System.out.println("Enter <program>");
             if (nextToken.equals("[PROGRAM]")) {
+                lineNum++;
                 statements();
                 if (nextToken.equals("[END_PROGRAM]")) {
                     lex(); // Move to the next token
@@ -368,6 +369,7 @@ public class RecursiveDescentParserMain {
 
         private void statement() {
             System.out.println("Enter <statement>");
+            lineNum++;
             if (nextToken.equals("[IDENT]")) {
                 lex();
                 assignment();
@@ -423,6 +425,7 @@ public class RecursiveDescentParserMain {
             System.out.println("Enter <loop>");
             lex();
             loop_condition();
+            loop_statements();
             System.out.println("Exit <loop>");
         }
 
@@ -460,8 +463,11 @@ public class RecursiveDescentParserMain {
 
         private void loop_statements() {
             System.out.println("Enter <loop_statements>");
-            while (!nextToken.equals("[END_LOOP]")) {
+            while (true) {
                 lex();
+                if (nextToken.equals("[END_LOOP]")) {
+                    break;
+                }
                 statement();
             }
             System.out.println("Exit <loop_statements>");
