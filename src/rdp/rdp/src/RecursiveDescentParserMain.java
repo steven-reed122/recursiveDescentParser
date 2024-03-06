@@ -346,11 +346,6 @@ public class RecursiveDescentParserMain {
             if (nextToken.equals("[PROGRAM]")) {
                 lineNum++;
                 statements();
-                if (nextToken.equals("[END_PROGRAM]")) {
-                    lex(); // Move to the next token
-                } else {
-                    error(); // Expected end of program
-                }
             } else {
                 error(); // Expected PROGRAM token
             }
@@ -360,8 +355,11 @@ public class RecursiveDescentParserMain {
 
         private void statements() {
             System.out.println("Enter <statements>");
-            while (!nextToken.equals("[END_PROGRAM]")) {
+            while (true) {
                 lex();
+                if (nextToken.equals("[END_PROGRAM]")) {
+                    break;
+                }
                 statement();
             }
             System.out.println("Exit <statements>");
@@ -404,10 +402,7 @@ public class RecursiveDescentParserMain {
             System.out.println("Enter <conditional>");
             lex();
             logicalExpression();
-            statements();
-            if (nextToken.equals("[END_IF]")) {
-                statements();
-            }
+            conditional_statements();
         }
 
         private void logicalExpression() {
@@ -419,6 +414,18 @@ public class RecursiveDescentParserMain {
                 expr();
             }
             System.out.println("Exit <logicalExpression>");
+        }
+
+        private void conditional_statements() {
+            System.out.println("Enter <conditional_statements>");
+            while (true) {
+                lex();
+                if (nextToken.equals("[END_IF]")) {
+                    break;
+                }
+                statement();
+            }
+            System.out.println("Exit <conditional_statements>");
         }
 
         private void loop() {
@@ -450,7 +457,6 @@ public class RecursiveDescentParserMain {
 
         private void loop_assignment() {
             System.out.println("Enter <loop_assignment>");
-            System.out.println(nextToken);
             if (nextToken.equals("[ASSIGN]")) {
                 lex();
                 expr();
