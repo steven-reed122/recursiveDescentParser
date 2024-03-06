@@ -324,7 +324,8 @@ public class RecursiveDescentParserMain {
         private Queue<String> tokens;
         private String nextToken;
         private String nextNextToken;
-        private String intConstOrIdent;
+        private String intConst;
+        private String ident;
         private int lineNum = 0;
         private String program = "";
         private Queue<String> usedVariables = new LinkedList<>();
@@ -360,7 +361,8 @@ public class RecursiveDescentParserMain {
                 nextNextToken = tokens.peek();
                 if(nextNextToken != null) {
                     if (nextNextToken.charAt(0) != '[') {
-                        intConstOrIdent = tokens.poll();
+                        intConst = tokens.poll();
+                        ident = intConst;
                     }
                 }
             } else {
@@ -406,10 +408,10 @@ public class RecursiveDescentParserMain {
             lineNum++;
             program += "\t";
             if (nextToken.equals("[IDENT]")) {
-                if(checkVariableAvailable(intConstOrIdent)) {
+                if(checkVariableAvailable(ident)) {
                     program += "int ";
                 }
-                program += intConstOrIdent;
+                program += ident;
                 lex();
                 assignment();
             } else if (nextToken.equals("[IF]")) {
@@ -419,8 +421,6 @@ public class RecursiveDescentParserMain {
             } else if (nextToken.equals("[LOOP]")) {
                 program += "for (";
                 lex();
-                System.out.println(nextToken);
-                System.out.println(intConstOrIdent);
                 loop();
             } else {
                 error();
@@ -456,7 +456,7 @@ public class RecursiveDescentParserMain {
         private void logicalExpression() {
             System.out.println("Enter <logicalExpression>");
             if (nextToken.equals ("[IDENT]")) {
-                program += intConstOrIdent;
+                program += ident;
                 lex();
             }
             else {
@@ -523,11 +523,11 @@ public class RecursiveDescentParserMain {
             System.out.println("Enter <loop_condition>");
             if (nextToken.equals("[IDENT]")) {
                 lex();
-                String tempVariable = intConstOrIdent;
-                if(checkVariableAvailable(intConstOrIdent)) {
+                String tempVariable = ident;
+                if(checkVariableAvailable(ident)) {
                     program += "int ";
                 }
-                program += intConstOrIdent;
+                program += ident;
                 loop_assignment();
                 if (nextToken.equals("[COLON]")) {
                     program += tempVariable + " < ";
@@ -622,14 +622,18 @@ public class RecursiveDescentParserMain {
     
         private void factor() {
             System.out.println("Enter <factor>");
-            if (nextToken.equals("[IDENT]") || nextToken.equals("[INT_CONST]")) {
+            if (nextToken.equals("[IDENT]")) {
                 lex();
-                if(!checkVariableAvailable(intConstOrIdent)) {
-                    program += intConstOrIdent;
+                if(!checkVariableAvailable(ident)) {
+                    program += ident;
                 }
                 else {
-                    throw new IllegalArgumentException("Error: IDENT"+ intConstOrIdent+"not yet initialized and assigned when used at line " + lineNum);
+                    throw new IllegalArgumentException("Error: IDENT "+ ident+" not yet initialized and assigned when used at line " + lineNum);
                 }
+            }
+            else if (nextToken.equals("[INT_CONST]")) {
+                program += intConst;
+                lex();
             }
             else {
                 if (nextToken.equals("[LP]")) {
