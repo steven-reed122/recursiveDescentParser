@@ -40,39 +40,39 @@ public class RecursiveDescentParserMain {
     }
 
     public static class tokenIterator implements Iterator<String> {
-    private String line;
+    private String text;
     private Queue<String> tokens;
     int index = 0;
+    int oldIndex = 0;
+    boolean isIntLiteralOrIdent = false;
     
-    public tokenIterator(String line) {
-        this.line = line;
+    public tokenIterator(String text) {
+        this.text = text;
         this.tokens = new LinkedList<>();
         parseTokens();
     }
     
     private void parseTokens() {
-        while (index < line.length()) {
-            while (index < line.length() && Character.isWhitespace(line.charAt(index))) {
+        while (index < text.length()) {
+            isIntLiteralOrIdent = false;
+            while (index < text.length() && Character.isWhitespace(text.charAt(index))) {
                 index++;
             }
-            if (index < line.length()) {
+            if (index < text.length()) {
                 StringBuilder tokenBuilder = new StringBuilder();
-                char ch = line.charAt(index);
+                char ch = text.charAt(index);
                 
                 switch (ch) {
                     case 'i':
-                        if (checkIsIf(line, index)) {
+                        if (checkIsIf(text, index)) {
                             tokenBuilder.append("[IF]");
                             index += 2; // Skip 'if'
-                        } else if (checkIsInt(line, index)) {
-                            tokenBuilder.append("[INT]");
-                            index += 3; // Skip 'int'
                         } else {
                             tokenBuilder.append(handleIdent());
                         }
                         break;
                     case 'p':
-                        if (checkIsProgram(line, index)) {
+                        if (checkIsProgram(text, index)) {
                             tokenBuilder.append("[PROGRAM]");
                             index += 7; // Skip 'program'
                         } else {
@@ -80,16 +80,16 @@ public class RecursiveDescentParserMain {
                         }
                         break;
                     case 'e':
-                        if (checkIsEnd_Something(line, index)) {
-                            if (checkIsEnd_If(line, index)) {
+                        if (checkIsEnd_Something(text, index)) {
+                            if (checkIsEnd_If(text, index)) {
                                 tokenBuilder.append("[END_IF]");
                                 index += 6; // Skip 'end_if'
                             }
-                            else if (checkIsEnd_Loop(line, index)) {
+                            else if (checkIsEnd_Loop(text, index)) {
                                 tokenBuilder.append("[END_LOOP]");
                                 index += 8; // Skip 'end_loop'
                             } 
-                            else if (checkIsEnd_Program(line, index)) {
+                            else if (checkIsEnd_Program(text, index)) {
                                 tokenBuilder.append("[END_PROGRAM]");
                                 index += 11; // Skip 'end_program'
                         } 
@@ -99,7 +99,7 @@ public class RecursiveDescentParserMain {
                         break;
                     }
                     case 'l':
-                        if (checkIsLoop(line, index)) {
+                        if (checkIsLoop(text, index)) {
                             tokenBuilder.append("[LOOP]");
                             index += 4; // Skip 'end_loop'
                         } else {
@@ -107,7 +107,7 @@ public class RecursiveDescentParserMain {
                         }
                         break;
                     case '=':
-                        if (checkIsEEGEOrLE(line, index)) {
+                        if (checkIsEEGEOrLE(text, index)) {
                             tokenBuilder.append("[EE]");
                             index += 2; // Skip '=='
                         } else {
@@ -116,7 +116,7 @@ public class RecursiveDescentParserMain {
                         }
                         break;
                     case '<':
-                        if (checkIsEEGEOrLE(line, index)) {
+                        if (checkIsEEGEOrLE(text, index)) {
                             tokenBuilder.append("[LE]");
                             index += 2; // Skip '<='
                         } else {
@@ -125,7 +125,7 @@ public class RecursiveDescentParserMain {
                         }
                         break;
                     case '>':
-                        if (checkIsEEGEOrLE(line, index)) {
+                        if (checkIsEEGEOrLE(text, index)) {
                             tokenBuilder.append("[GE]");
                             index += 2; // Skip '<='
                         } else {
@@ -153,8 +153,10 @@ public class RecursiveDescentParserMain {
                     default:
                         if (Character.isDigit(ch)) {
                             tokenBuilder.append(handleNum());
+                            isIntLiteralOrIdent = true;
                         } else if (Character.isLetter(ch)) {
                             tokenBuilder.append(handleIdent());
+                            isIntLiteralOrIdent = true;
                         } else {
                             index++; // Skip unknown character
                             tokenBuilder.append("[UNKNOWN]");
@@ -162,6 +164,9 @@ public class RecursiveDescentParserMain {
                         break;
                 }
                 tokens.offer(tokenBuilder.toString());
+                if (isIntLiteralOrIdent) {
+                    tokens.offer(text.substring(oldIndex, index));
+                }
             }
         }
     }
@@ -180,18 +185,19 @@ public class RecursiveDescentParserMain {
     }
 
     private String handleNum() {
-        while (index < line.length() && Character.isDigit(line.charAt(index))) {
+        oldIndex = index;
+        while (index < text.length() && Character.isDigit(text.charAt(index))) {
             index++;
         }
-        if (index < line.length() && Character.isLetter(line.charAt(index))) {
-            // You can choose to throw an exception or return an error token
-            // Throwing an exception will halt the parsing with an error
+        if (index < text.length() && Character.isLetter(text.charAt(index))) {
+            // Error: Integer literal followed by a letter
             throw new IllegalArgumentException("Error: Integer literal followed by a letter at position " + index);
         }
         return "[INT_CONST]";
     } 
     private String handleIdent() {
-        while (index < line.length() && (Character.isLetterOrDigit(line.charAt(index)))) {
+        oldIndex = index;
+        while (index < text.length() && (Character.isLetterOrDigit(text.charAt(index)))) {
             index++;
         }
         return "[IDENT]";
@@ -230,17 +236,6 @@ public class RecursiveDescentParserMain {
                 char ch7 = line.charAt(i+6);
                 if(ch2 == 'r' && ch3 == 'o' && ch4 == 'g' && ch5 == 'r'
                         && ch6 == 'a' && ch7 == 'm') {
-                    return true;
-                }
-            }
-            return false;
-        }
-    private boolean checkIsInt(String line, int i) {
-            if(line.length() > i + 2)
-            {
-                char chNext = line.charAt(i+1);
-                char chNextNext = line.charAt(i+2);
-                if(chNext == 'n' && chNextNext == 't') {
                     return true;
                 }
             }
@@ -322,6 +317,8 @@ public class RecursiveDescentParserMain {
     public static class recursiveDescentParser {
         private Queue<String> tokens;
         private String nextToken;
+        private String nextNextToken;
+        private String intConstOrIdent;
         private int lineNum = 0;
         private String program = "";
 
@@ -337,6 +334,12 @@ public class RecursiveDescentParserMain {
         private void lex() {
             if (tokens.size() > 0) {
                 nextToken = tokens.poll();
+                nextNextToken = tokens.peek();
+                if(nextNextToken != null) {
+                    if (nextNextToken.charAt(0) != '[') {
+                        intConstOrIdent = tokens.poll();
+                    }
+                }
             } else {
                 nextToken = null; // or handle end of tokens
             }
@@ -369,6 +372,7 @@ public class RecursiveDescentParserMain {
                     lineNum++;
                     break;
                 }
+                program += "\t";
                 statement();
             }
             System.out.println("Exit <statements>");
@@ -378,6 +382,7 @@ public class RecursiveDescentParserMain {
             System.out.println("Enter <statement>");
             lineNum++;
             if (nextToken.equals("[IDENT]")) {
+                program += nextToken;
                 lex();
                 assignment();
             } else if (nextToken.equals("[IF]")) {
@@ -389,6 +394,7 @@ public class RecursiveDescentParserMain {
             } else {
                 error();
             }
+            program += "\n";
             System.out.println("Exit <statement>");
         }
 
