@@ -358,6 +358,7 @@ public class RecursiveDescentParserMain {
             while (true) {
                 lex();
                 if (nextToken.equals("[END_PROGRAM]")) {
+                    lineNum++;
                     break;
                 }
                 statement();
@@ -421,6 +422,7 @@ public class RecursiveDescentParserMain {
             while (true) {
                 lex();
                 if (nextToken.equals("[END_IF]")) {
+                    lineNum++;
                     break;
                 }
                 statement();
@@ -472,6 +474,7 @@ public class RecursiveDescentParserMain {
             while (true) {
                 lex();
                 if (nextToken.equals("[END_LOOP]")) {
+                    lineNum++;
                     break;
                 }
                 statement();
