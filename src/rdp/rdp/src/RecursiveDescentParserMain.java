@@ -44,7 +44,8 @@ public class RecursiveDescentParserMain {
     private Queue<String> tokens;
     int index = 0;
     int oldIndex = 0;
-    boolean isIntLiteralOrIdent = false;
+    boolean isIntLiteral = false;
+    boolean isIdent = false;
     
     public tokenIterator(String text) {
         this.text = text;
@@ -54,7 +55,8 @@ public class RecursiveDescentParserMain {
     
     private void parseTokens() {
         while (index < text.length()) {
-            isIntLiteralOrIdent = false;
+            isIntLiteral = false;
+            isIdent = false;
             while (index < text.length() && Character.isWhitespace(text.charAt(index))) {
                 index++;
             }
@@ -69,7 +71,7 @@ public class RecursiveDescentParserMain {
                             index += 2; // Skip 'if'
                         } else {
                             tokenBuilder.append(handleIdent());
-                            tokens.offer(text.substring(oldIndex, index));
+                            isIdent = true;
                         }
                         break;
                     case 'p':
@@ -78,7 +80,7 @@ public class RecursiveDescentParserMain {
                             index += 7; // Skip 'program'
                         } else {
                             tokenBuilder.append(handleIdent());
-                            isIntLiteralOrIdent = true;
+                            isIdent = true;
                         }
                         break;
                     case 'e':
@@ -97,7 +99,7 @@ public class RecursiveDescentParserMain {
                         } 
                         else {
                             tokenBuilder.append(handleIdent());
-                            isIntLiteralOrIdent = true;
+                            isIdent = true;
                         }
                         break;
                     }
@@ -107,7 +109,7 @@ public class RecursiveDescentParserMain {
                             index += 4; // Skip 'end_loop'
                         } else {
                             tokenBuilder.append(handleIdent());
-                            isIntLiteralOrIdent = true;
+                            isIdent = true;
                         }
                         break;
                     case '=':
@@ -157,10 +159,10 @@ public class RecursiveDescentParserMain {
                     default:
                         if (Character.isDigit(ch)) {
                             tokenBuilder.append(handleNum());
-                            isIntLiteralOrIdent = true;
+                            isIntLiteral = true;
                         } else if (Character.isLetter(ch)) {
                             tokenBuilder.append(handleIdent());
-                            isIntLiteralOrIdent = true;
+                            isIdent = true;
                         } else {
                             index++; // Skip unknown character
                             tokenBuilder.append("[UNKNOWN]");
@@ -168,7 +170,7 @@ public class RecursiveDescentParserMain {
                         break;
                 }
                 tokens.offer(tokenBuilder.toString());
-                if (isIntLiteralOrIdent) {
+                if (isIdent || isIntLiteral) {
                     tokens.offer(text.substring(oldIndex, index));
                 }
             }
@@ -622,7 +624,12 @@ public class RecursiveDescentParserMain {
             System.out.println("Enter <factor>");
             if (nextToken.equals("[IDENT]") || nextToken.equals("[INT_CONST]")) {
                 lex();
-                program += intConstOrIdent;
+                if(!checkVariableAvailable(intConstOrIdent)) {
+                    program += intConstOrIdent;
+                }
+                else {
+                    throw new IllegalArgumentException("Error: IDENT"+ intConstOrIdent+"not yet initialized and assigned when used at line " + lineNum);
+                }
             }
             else {
                 if (nextToken.equals("[LP]")) {
