@@ -504,7 +504,7 @@ public class RecursiveDescentParserMain {
                 String tempVariable = intConstOrIdent;
                 loop_assignment();
                 if (nextToken.equals("[COLON]")) {
-                    program += tempVariable + " <";
+                    program += tempVariable + " < ";
                     lex();
                     expr();
                     program += " ; ";
