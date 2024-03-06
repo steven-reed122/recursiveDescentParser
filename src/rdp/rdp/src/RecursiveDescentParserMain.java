@@ -507,7 +507,7 @@ public class RecursiveDescentParserMain {
                     program += tempVariable + " < ";
                     lex();
                     expr();
-                    program += " ; ";
+                    program += "; ";
                     program += tempVariable + "++)";
                 }
                 else {
