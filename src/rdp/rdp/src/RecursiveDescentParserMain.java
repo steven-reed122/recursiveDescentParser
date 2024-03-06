@@ -33,6 +33,7 @@ public class RecursiveDescentParserMain {
             }
             recursiveDescentParser parser = new recursiveDescentParser(tokensCopy);
             parser.program();
+            System.out.println(parser.getProgram());
         } catch (FileNotFoundException e) {
             System.err.println("File not found: " + e.getMessage());
         }   
@@ -322,6 +323,11 @@ public class RecursiveDescentParserMain {
         private Queue<String> tokens;
         private String nextToken;
         private int lineNum = 0;
+        private String program = "";
+
+        public String getProgram() {
+            return program;
+        }
 
         public recursiveDescentParser(Queue<String> tokens) {
             this.tokens = tokens;
@@ -344,11 +350,13 @@ public class RecursiveDescentParserMain {
         private void program() {
             System.out.println("Enter <program>");
             if (nextToken.equals("[PROGRAM]")) {
+                program += "public static void main(String[] args) { \n";
                 lineNum++;
                 statements();
             } else {
                 error(); // Expected PROGRAM token
             }
+            program += "}\n";
             System.out.println("Exit <program>");
         }
         
