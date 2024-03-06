@@ -325,9 +325,26 @@ public class RecursiveDescentParserMain {
         private String intConstOrIdent;
         private int lineNum = 0;
         private String program = "";
+        private Queue<String> usedVariables = new LinkedList<>();
 
         public String getProgram() {
             return program;
+        }
+
+        private boolean isVariableUsed(String variable) {
+            return usedVariables.contains(variable);
+        }
+
+        private void addUsedVariable(String variable) {
+            usedVariables.offer(variable);
+        }
+
+        private boolean checkVariableAvailable(String variable) {
+            if (!isVariableUsed(variable)) {
+                addUsedVariable(variable);
+                return true;
+            }
+            return false;
         }
 
         public recursiveDescentParser(Queue<String> tokens) {
@@ -357,13 +374,14 @@ public class RecursiveDescentParserMain {
         private void program() {
             System.out.println("Enter <program>");
             if (nextToken.equals("[PROGRAM]")) {
+                program += "public class MyClass { \n";
                 program += "public static void main(String[] args) { \n";
                 lineNum++;
                 statements();
             } else {
                 error(); // Expected PROGRAM token
             }
-            program += "}\n";
+            program += "}\n}\n";
             System.out.println("Exit <program>");
         }
         
@@ -386,7 +404,10 @@ public class RecursiveDescentParserMain {
             lineNum++;
             program += "\t";
             if (nextToken.equals("[IDENT]")) {
-                program += "int "+intConstOrIdent;
+                if(checkVariableAvailable(intConstOrIdent)) {
+                    program += "int ";
+                }
+                program += intConstOrIdent;
                 lex();
                 assignment();
             } else if (nextToken.equals("[IF]")) {
@@ -500,8 +521,11 @@ public class RecursiveDescentParserMain {
             System.out.println("Enter <loop_condition>");
             if (nextToken.equals("[IDENT]")) {
                 lex();
-                program += "int " + intConstOrIdent;
                 String tempVariable = intConstOrIdent;
+                if(checkVariableAvailable(intConstOrIdent)) {
+                    program += "int ";
+                }
+                program += intConstOrIdent;
                 loop_assignment();
                 if (nextToken.equals("[COLON]")) {
                     program += tempVariable + " < ";
