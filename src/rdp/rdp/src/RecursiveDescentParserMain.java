@@ -69,6 +69,7 @@ public class RecursiveDescentParserMain {
                             index += 2; // Skip 'if'
                         } else {
                             tokenBuilder.append(handleIdent());
+                            tokens.offer(text.substring(oldIndex, index));
                         }
                         break;
                     case 'p':
@@ -77,6 +78,7 @@ public class RecursiveDescentParserMain {
                             index += 7; // Skip 'program'
                         } else {
                             tokenBuilder.append(handleIdent());
+                            isIntLiteralOrIdent = true;
                         }
                         break;
                     case 'e':
@@ -95,6 +97,7 @@ public class RecursiveDescentParserMain {
                         } 
                         else {
                             tokenBuilder.append(handleIdent());
+                            isIntLiteralOrIdent = true;
                         }
                         break;
                     }
@@ -104,6 +107,7 @@ public class RecursiveDescentParserMain {
                             index += 4; // Skip 'end_loop'
                         } else {
                             tokenBuilder.append(handleIdent());
+                            isIntLiteralOrIdent = true;
                         }
                         break;
                     case '=':
@@ -218,8 +222,8 @@ public class RecursiveDescentParserMain {
     private boolean checkIsIf(String line, int i) {
             if(line.length() > i + 1)
             {
-                char chNext = line.charAt(i+1);
-                if(chNext == 'f') {
+                char ch2 = line.charAt(i+1);
+                if(ch2 == 'f') {
                     return true;
                 }
             }
@@ -372,7 +376,6 @@ public class RecursiveDescentParserMain {
                     lineNum++;
                     break;
                 }
-                program += "\t";
                 statement();
             }
             System.out.println("Exit <statements>");
@@ -381,15 +384,20 @@ public class RecursiveDescentParserMain {
         private void statement() {
             System.out.println("Enter <statement>");
             lineNum++;
+            program += "\t";
             if (nextToken.equals("[IDENT]")) {
-                program += nextToken;
+                program += "int "+intConstOrIdent;
                 lex();
                 assignment();
             } else if (nextToken.equals("[IF]")) {
+                program += "if (";
                 lex();
                 conditional();
             } else if (nextToken.equals("[LOOP]")) {
+                program += "for (";
                 lex();
+                System.out.println(nextToken);
+                System.out.println(intConstOrIdent);
                 loop();
             } else {
                 error();
@@ -401,11 +409,13 @@ public class RecursiveDescentParserMain {
         private void assignment() {
             System.out.println("Enter <assignment>");
             if (nextToken.equals("[ASSIGN]")) {
+                program += " = ";
                 lex();
                 expr();
                 if(!nextToken.equals("[SEMI]")) {
                     error();
                 }
+                program += ";";
             }
             else {
                 error();
@@ -422,23 +432,52 @@ public class RecursiveDescentParserMain {
 
         private void logicalExpression() {
             System.out.println("Enter <logicalExpression>");
-            expr();
+            if (nextToken.equals ("[IDENT]")) {
+                program += intConstOrIdent;
+                lex();
+            }
+            else {
+                error();
+            }
             if (nextToken.equals("[LT]") || nextToken.equals("[GT]") || nextToken.equals("[LE]") || 
                     nextToken.equals("[GE]") || nextToken.equals("[EE]")) {
+                switch (nextToken) {
+                    case "[LT]":
+                        program += " < ";
+                        break;
+                    case "[GT]":
+                        program += " > ";
+                        break;
+                    case "[LE]":
+                        program += " <= ";
+                        break;
+                    case "[GE]":
+                        program += " >= ";
+                        break;
+                    case "[EE]":
+                        program += " == ";
+                        break;
+                    default:
+                        error();
+                }
                 lex();
                 expr();
+                program += ")";
             }
             System.out.println("Exit <logicalExpression>");
         }
 
         private void conditional_statements() {
             System.out.println("Enter <conditional_statements>");
+            program += " {\n";
             while (true) {
                 lex();
                 if (nextToken.equals("[END_IF]")) {
                     lineNum++;
+                    program += "\t}\n";
                     break;
                 }
+                program += "\t";
                 statement();
             }
             System.out.println("Exit <conditional_statements>");
@@ -446,20 +485,30 @@ public class RecursiveDescentParserMain {
 
         private void loop() {
             System.out.println("Enter <loop>");
-            lex();
-            loop_condition();
-            loop_statements();
-            System.out.println("Exit <loop>");
+            if(nextToken.equals("[LP]")) {
+                lex();
+                loop_condition();
+                loop_statements();
+                System.out.println("Exit <loop>");
+                }
+            else {
+                error();
+            }
         }
 
         private void loop_condition() {
             System.out.println("Enter <loop_condition>");
             if (nextToken.equals("[IDENT]")) {
                 lex();
+                program += "int " + intConstOrIdent;
+                String tempVariable = intConstOrIdent;
                 loop_assignment();
                 if (nextToken.equals("[COLON]")) {
+                    program += tempVariable + " <";
                     lex();
                     expr();
+                    program += " ; ";
+                    program += tempVariable + "++)";
                 }
                 else {
                     error();
@@ -474,23 +523,28 @@ public class RecursiveDescentParserMain {
         private void loop_assignment() {
             System.out.println("Enter <loop_assignment>");
             if (nextToken.equals("[ASSIGN]")) {
+                program += " = ";
                 lex();
                 expr();
+                program += "; ";
             }
             else {
                     error();
-                }
+            }
             System.out.println("Exit <loop_assignment>");
         }
 
         private void loop_statements() {
             System.out.println("Enter <loop_statements>");
+            program += " {\n";
             while (true) {
                 lex();
                 if (nextToken.equals("[END_LOOP]")) {
                     lineNum++;
+                    program += "\t}\n";
                     break;
                 }
+                program += "\t";
                 statement();
             }
             System.out.println("Exit <loop_statements>");
@@ -500,6 +554,16 @@ public class RecursiveDescentParserMain {
             System.out.println("Enter <expr>");
             term();
             while (nextToken.equals("[ADD_OP]") || nextToken.equals("[SUB_OP]")){
+                switch (nextToken) {
+                    case "[ADD_OP]":
+                        program += " + ";
+                        break;
+                    case "[SUB_OP]":
+                        program += " - ";
+                        break;
+                    default:
+                        error();
+                }
                 lex();
                 term();
             }
@@ -511,22 +575,40 @@ public class RecursiveDescentParserMain {
             factor();
             while (nextToken.equals("[MUL_OP]") || nextToken.equals("[DIV_OP]") 
                     || nextToken.equals("[MOD_OP]")) {
-            lex();
-            factor();
+                switch (nextToken) {
+                    case "[MUL_OP]":
+                        program += " * ";
+                        break;
+                    case "[DIV_OP]":
+                        program += " / ";
+                        break;
+                    case "[MOD_OP]":
+                        program += " % ";
+                        break;
+                    default:
+                        error();
+                }
+                lex();
+                factor();
             }
             System.out.println("Exit <term>");
         }
     
         private void factor() {
             System.out.println("Enter <factor>");
-            if (nextToken.equals("[IDENT]") || nextToken.equals("[INT_CONST]"))
+            if (nextToken.equals("[IDENT]") || nextToken.equals("[INT_CONST]")) {
                 lex();
+                program += intConstOrIdent;
+            }
             else {
                 if (nextToken.equals("[LP]")) {
+                    program += "(";
                     lex();
                     expr();
-                    if (nextToken.equals("[RP]"))
+                    if (nextToken.equals("[RP]")) {
+                        program += ")";
                         lex();
+                    }
                     else
                         error();
                 }
