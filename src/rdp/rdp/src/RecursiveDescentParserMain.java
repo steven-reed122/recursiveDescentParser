@@ -102,7 +102,7 @@ public class RecursiveDescentParserMain {
                             isIdent = true;
                         }
                         break;
-                    }
+                        }
                     case 'l':
                         if (checkIsLoop(text, index)) {
                             tokenBuilder.append("[LOOP]");
@@ -389,7 +389,6 @@ public class RecursiveDescentParserMain {
             System.out.println("Exit <program>");
         }
         
-
         private void statements() {
             System.out.println("Enter <statements>");
             while (true) {
